@@ -1,0 +1,85 @@
+﻿@model IEnumerable<TodoList.Models.Todo>
+
+@if (TempData.ContainsKey("SuccessMessage"))
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+<h1>Task List</h1>
+
+<div class="form-group">
+    <label for="taskFilter">Filter Tasks:</label>
+    <select id="taskFilter" class="form-control">
+        <option value="all">All Tasks</option>
+        <option value="completed">Completed Tasks</option>
+        <option value="incomplete">Incompleted Tasks</option>
+    </select>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Update</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var task in Model)
+        {
+            <tr>
+                <td>@task.title</td>
+                <td>@task.description</td>
+                <td>
+                    <input type="checkbox" class="task-checkbox" data-title="@task.title" @(task.isCompleted ? "checked" : "") />
+                </td>
+                <td>
+                    <a asp-action="Update" asp-route-title="@task.title">Update</a>
+                </td>
+                <td>
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" name="title" value="@task.title" />
+                        <button type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-action="Create"><span>Add a new task</span></a>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(function () {
+        $('.task-checkbox').change(function () {
+            var title = $(this).data('title');
+            var isCompleted = $(this).is(':checked');
+
+            $.ajax({
+                url: '@Url.Action("UpdateStatus")',
+                method: 'POST',
+                data: { title: title, isCompleted: isCompleted },
+                success: function () {
+                    // Update the UI as needed
+                }
+            });
+        });
+
+        $('#taskFilter').change(function () {
+            var filterValue = $(this).val();
+            filterTasks(filterValue);
+        });
+
+        function filterTasks(filterValue) {
+            $('.task-checkbox').each(function () {
+                var isCompleted = $(this).is(':checked');
+                var shouldShow = (filterValue === 'all') || (filterValue === 'completed' && isCompleted) || (filterValue === 'incomplete' && !isCompleted);
+                $(this).closest('tr').toggle(shouldShow);
+            });
+        }
+    });
+</script>
+
